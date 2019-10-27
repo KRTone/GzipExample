@@ -14,20 +14,6 @@ namespace MultithreadedGZip.Win
             var container = UnityConfig.GetConfiguredContainer(args);
 
             Console.WriteLine("Configure logger ...");
-            
-            var logger = container.Resolve<ILogService>();
-            log4net.Config.XmlConfigurator.Configure();
-
-            AppDomain.CurrentDomain.UnhandledException += (s,e) => 
-            {
-                logger.Exception(e.ExceptionObject as Exception);
-
-                Console.WriteLine("Program failed");
-                Console.WriteLine("Press any key to exit");
-                Console.ReadKey();
-
-                Environment.Exit(1);
-            };
 
             Console.WriteLine("All done. Starting program...");
 

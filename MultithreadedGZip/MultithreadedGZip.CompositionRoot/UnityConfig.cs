@@ -6,8 +6,8 @@ namespace MultithreadedGZip.CompositionRoot
     {
         public static void RegisterTypes(IUnityContainer unityContainer, string[] args)
         {
-            RegisterConfigurators(unityContainer, args);
             RegisterLoggers(unityContainer);
+            RegisterConfigurators(unityContainer, args);
             RegisterMultithreadedGZip(unityContainer);
         }
     }

@@ -10,6 +10,8 @@ namespace MultithreadedGZip.CompositionRoot
     {
         static void RegisterConfigurators(IUnityContainer unityContainer, string[] args)
         {
+            args.ThrowIfBadArgs();
+
             var processors = Environment.ProcessorCount;
             var compressionMode = args.GetCompressionMode();
             var inFilePath = args.GetInFilePath();

@@ -44,7 +44,7 @@ namespace MultithreadedGZip.CompositionRoot.ArgsParser
         public static void ThrowIfBadArgs(this string[] args)
         {
             if (args == null || args.Length != 3)
-                throw new ArgumentException(nameof(args));
+                throw new ArgumentException("Incorrect input args");
         }
     }
 }
