@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultithreadedGZip", "MultithreadedGZip\MultithreadedGZip.csproj", "{214D2A90-E37E-4C08-9918-AA1C03472645}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultithreadedGZip.CompositionRoot", "MultithreadedGZip.CompositionRoot\MultithreadedGZip.CompositionRoot.csproj", "{62E222F4-CC52-412F-AD3C-11B37A241AFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultithreadedGZip.BLL", "MultithreadedGZip.BLL\MultithreadedGZip.BLL.csproj", "{3BAB7075-1D1D-4014-8C16-138088DBDFDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultithreadedGZip.Win", "MultithreadedGZip.Win\MultithreadedGZip.Win.csproj", "{214D2A90-E37E-4C08-9918-AA1C03472645}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultithreadedGZip.Loggers", "MultithreadedGZip.Loggers\MultithreadedGZip.Loggers.csproj", "{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +17,22 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{62E222F4-CC52-412F-AD3C-11B37A241AFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62E222F4-CC52-412F-AD3C-11B37A241AFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62E222F4-CC52-412F-AD3C-11B37A241AFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62E222F4-CC52-412F-AD3C-11B37A241AFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BAB7075-1D1D-4014-8C16-138088DBDFDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BAB7075-1D1D-4014-8C16-138088DBDFDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BAB7075-1D1D-4014-8C16-138088DBDFDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BAB7075-1D1D-4014-8C16-138088DBDFDC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{214D2A90-E37E-4C08-9918-AA1C03472645}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{214D2A90-E37E-4C08-9918-AA1C03472645}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{214D2A90-E37E-4C08-9918-AA1C03472645}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{214D2A90-E37E-4C08-9918-AA1C03472645}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

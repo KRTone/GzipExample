@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{214D2A90-E37E-4C08-9918-AA1C03472645}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>MultithreadedGZip</RootNamespace>
-    <AssemblyName>MultithreadedGZip</AssemblyName>
+    <RootNamespace>MultithreadedGZip.Win</RootNamespace>
+    <AssemblyName>MultithreadedGZip.Win</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -33,21 +33,54 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.6.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Unity.Abstractions, Version=5.11.1.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.11.1\lib\net46\Unity.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Container, Version=5.11.1.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.11.1\lib\net46\Unity.Container.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppStart\ProgramStarter.cs" />
+    <Compile Include="AppStart\UnityConfig.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <EmbeddedResource Include="Log.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MultithreadedGZip.BLL\MultithreadedGZip.BLL.csproj">
+      <Project>{3bab7075-1d1d-4014-8c16-138088dbdfdc}</Project>
+      <Name>MultithreadedGZip.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MultithreadedGZip.CompositionRoot\MultithreadedGZip.CompositionRoot.csproj">
+      <Project>{62e222f4-cc52-412f-ad3c-11b37a241afa}</Project>
+      <Name>MultithreadedGZip.CompositionRoot</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MultithreadedGZip.Loggers\MultithreadedGZip.Loggers.csproj">
+      <Project>{3D06BDB0-4294-4C2E-BD0B-4210BC42C163}</Project>
+      <Name>MultithreadedGZip.Loggers</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
