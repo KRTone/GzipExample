@@ -32,12 +32,6 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
             Awaiter = new ManualResetEvent(false);
         }
 
-        static string ToOutputFormat(Block block)
-        {
-            var output = Encoding.Unicode.GetString(block.Bytes);
-            return output;
-        }
-
         void HandleBlockInternal(Block block, Stream outStream)
         {
             logger.Info($"BlocksEngine.HandleBlockInternal(blockNum = {block.Number})");
