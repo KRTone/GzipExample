@@ -11,6 +11,7 @@ namespace MultithreadedGZip.Loggers
 
         public FileLogger()
         {
+            XmlConfigurator.Configure();
         }
 
         public void Exception(Exception ex)
