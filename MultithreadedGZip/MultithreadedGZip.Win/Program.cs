@@ -13,8 +13,6 @@ namespace MultithreadedGZip.Win
 
             var container = UnityConfig.GetConfiguredContainer(args);
 
-            Console.WriteLine("Configure logger ...");
-
             Console.WriteLine("All done. Starting program...");
 
             using (var program = container.Resolve<ProgramStarter>())

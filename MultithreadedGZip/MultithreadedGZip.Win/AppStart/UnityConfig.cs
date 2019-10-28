@@ -11,6 +11,7 @@ namespace MultithreadedGZip.Win.AppStart
 
             //надо так же перехватывать ошибки при сборке/разрешении зависимостей
             //поэтому подписываемя перед регистрацией типов
+            Console.WriteLine("Configure logger ...");
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 var ex = e.ExceptionObject as Exception;
@@ -30,6 +31,7 @@ namespace MultithreadedGZip.Win.AppStart
                 Environment.Exit(1);
             };
 
+            Console.WriteLine("Register types ...");
             RegisterTypes(container, args);
             return container;
         }
