@@ -22,7 +22,10 @@ namespace MultithreadedGZip.Win.AppStart
         public void Dispose()
         {
             if (!isDisposed)
+            {
                 zipper.Dispose();
+                isDisposed = true;
+            }
         }
     }
 }

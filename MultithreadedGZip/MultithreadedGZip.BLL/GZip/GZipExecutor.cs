@@ -100,13 +100,19 @@ namespace MultithreadedGZip.BLL.GZip
             logger.Info("Complete GZipExecutor.InitializeStreams()");
         }
 
+        bool isDisposed = false;
+
         public void Dispose()
         {
-            logger.Info("Start GZipExecutor.Dispose()");
-            gzipStream.Dispose();
-            newStream.Dispose();
-            inStream.Dispose();
-            logger.Info("Complete GZipExecutor.Dispose()");
+            if (!isDisposed)
+            {
+                logger.Info("Start GZipExecutor.Dispose()");
+                gzipStream.Dispose();
+                newStream.Dispose();
+                inStream.Dispose();
+                logger.Info("Complete GZipExecutor.Dispose()");
+                isDisposed = true;
+            }
         }
     }
 }
