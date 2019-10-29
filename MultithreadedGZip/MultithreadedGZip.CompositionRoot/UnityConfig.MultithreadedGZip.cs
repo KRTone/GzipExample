@@ -16,6 +16,7 @@ namespace MultithreadedGZip.CompositionRoot
             unityContainer.RegisterType<ICustomSemaphore, DynamicSemaphore>(new ContainerControlledLifetimeManager());
             unityContainer.RegisterType<IQueuedThreadPool, QueuedThreadPool>();
             unityContainer.RegisterType<IGZipExecutor, GZipExecutor>();
+            unityContainer.RegisterType<ICompressor, GZipCompressor>(new ContainerControlledLifetimeManager());
         }
     }
 }

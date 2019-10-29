@@ -15,6 +15,8 @@ namespace MultithreadedGZip.BLL.GZip
         readonly IGZipConfigurator gZipConfigurator;
         readonly IBlocksEngine blocksEngine;
         readonly ILogService logger;
+        readonly ICompressor compressor;
+        readonly IQueuedThreadPool threadPool;
         event BlockHandler BlockReaded;
         event Action StreamEnded;
 
@@ -26,16 +28,18 @@ namespace MultithreadedGZip.BLL.GZip
             IGZipConfigurator gZipConfigurator,
             ICustomSemaphore semaphore,
             IBlocksEngine blocksEngine,
-            ILogService logger)
+            ILogService logger,
+            ICompressor compressor,
+            IQueuedThreadPool threadPool)
         {
+            this.threadPool = threadPool;
             this.blocksEngine = blocksEngine ?? throw new ArgumentNullException(nameof(GZipExecutor.blocksEngine));
             this.multithreadedConfigurator = multithreadedConfigurator ?? throw new ArgumentNullException(nameof(multithreadedConfigurator));
             this.gZipConfigurator = gZipConfigurator ?? throw new ArgumentNullException(nameof(gZipConfigurator));
             this.semaphore = semaphore ?? throw new ArgumentNullException(nameof(semaphore));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            InitializeStreams();
-            BlockReaded += blocksEngine.HandleBlock;
-            StreamEnded += blocksEngine.EndOfBlocks;
+            this.compressor = compressor ?? throw new ArgumentNullException(nameof(compressor));
+            //InitializeStreams();
         }
 
         public void Execute()
@@ -44,18 +48,10 @@ namespace MultithreadedGZip.BLL.GZip
 
             while (true)
             {
-                semaphore.WaitOne();
                 var buffer = new byte[multithreadedConfigurator.BlockSize];
-                int size = 0;
-                bool isCompress = gZipConfigurator.CompressionMode == CompressionMode.Compress;
-                if (isCompress)
-                {
-                    size = inStream.Read(buffer, 0, multithreadedConfigurator.BlockSize);
-                }
-                else
-                {
-                    size = gzipStream.Read(buffer, 0, multithreadedConfigurator.BlockSize);
-                }
+                semaphore.WaitOne();
+                int size = compressor.ReadBytes(buffer, multithreadedConfigurator.BlockSize);
+
                 if (size == 0)
                 {
                     semaphore.Release();
@@ -63,15 +59,9 @@ namespace MultithreadedGZip.BLL.GZip
                     blocksEngine.Awaiter.WaitOne();
                     return;
                 }
+
                 var block = new Block(blockNumber++, buffer, size);
-                if (isCompress)
-                {
-                    BlockReaded?.Invoke(block, gzipStream);
-                }
-                else
-                {
-                    BlockReaded?.Invoke(block, newStream);
-                }
+                threadPool.AddActionToQueue(() => compressor.WriteBlock(block));
             }
         }
 
