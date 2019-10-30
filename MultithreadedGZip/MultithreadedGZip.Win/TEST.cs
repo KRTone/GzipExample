@@ -1,6 +1,4 @@
-﻿using BaltBet.CashDevices.Atol;
-using BaltBet.CashDevices.Atol.Common;
-using CommonServiceLocator;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -15,7 +13,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Tests.KS;
 
 namespace Tests
 {
