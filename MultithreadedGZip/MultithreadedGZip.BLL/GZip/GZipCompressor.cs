@@ -11,19 +11,18 @@ namespace MultithreadedGZip.BLL.GZip
         public GZipCompressor(IBlockWriter writer, IGZipConfigurator zipConfigurator, ILogService logService) : base(writer, zipConfigurator)
         {
             this.logService = logService ?? throw new ArgumentNullException(nameof(logService));
+            outStream = new Lazy<Stream>(() => new GZipStream(new FileStream(zipConfigurator.OutFilePath, FileMode.Create, FileAccess.ReadWrite), CompressionMode.Compress));
+            inputStream = new Lazy<Stream>(() => File.OpenRead(zipConfigurator.InFilePath));
         }
 
         readonly ILogService logService;
+        readonly Lazy<Stream> inputStream;
+        readonly Lazy<Stream> outStream;
 
-        protected override Lazy<Stream> InputStream => new Lazy<Stream>(() => 
-        {
-            return File.OpenRead(zipConfigurator.InFilePath);
-        });
+        protected override Stream InputStream => inputStream.Value;
 
-        protected override Lazy<Stream> OutStream => new Lazy<Stream>(() =>
-        {
-            return new GZipStream(new FileStream(zipConfigurator.OutFilePath, FileMode.Create, FileAccess.ReadWrite), CompressionMode.Compress);
-        });
+
+        protected override Stream OutStream => outStream.Value;
 
         protected override void ExecuteDispose()
         {

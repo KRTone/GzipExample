@@ -40,6 +40,7 @@
     <Compile Include="GZip\GZipCompressor.cs" />
     <Compile Include="GZip\GZipDecompressor.cs" />
     <Compile Include="Interfaces\IBlocksEngine.cs" />
+    <Compile Include="Interfaces\IThreadsManager.cs" />
     <Compile Include="Interfaces\ICompressor.cs" />
     <Compile Include="Interfaces\ICustomSemaphore.cs" />
     <Compile Include="Interfaces\IGZipExecutor.cs" />
@@ -48,6 +49,7 @@
     <Compile Include="GZip\GZipExecutor.cs" />
     <Compile Include="Common\Block.cs" />
     <Compile Include="MultithreadedExtensions\BlocksEngine.cs" />
+    <Compile Include="MultithreadedExtensions\ThreadsManager.cs" />
     <Compile Include="Interfaces\Configurators\IMultithreadedConfigurator.cs" />
     <Compile Include="Configurators\MultithreadedGZipConfigurator.cs" />
     <Compile Include="MultithreadedExtensions\DynamicSemaphore.cs" />

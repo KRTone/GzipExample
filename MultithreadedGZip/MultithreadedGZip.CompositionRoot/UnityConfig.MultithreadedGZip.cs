@@ -13,6 +13,7 @@ namespace MultithreadedGZip.CompositionRoot
         {
             unityContainer.RegisterType<IBlockWriter, BytesToBlockWriter>();
             unityContainer.RegisterType<IBlocksEngine, BlocksEngine>();
+            unityContainer.RegisterType<IThreadsManagers, ThreadsManager>();
             unityContainer.RegisterType<ICustomSemaphore, DynamicSemaphore>(new ContainerControlledLifetimeManager());
             unityContainer.RegisterType<IQueuedThreadPool, QueuedThreadPool>();
             unityContainer.RegisterType<IGZipExecutor, GZipExecutor>();

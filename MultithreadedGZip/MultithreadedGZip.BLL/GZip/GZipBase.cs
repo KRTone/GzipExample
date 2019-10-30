@@ -15,21 +15,21 @@ namespace MultithreadedGZip.BLL.GZip
         }
 
         protected readonly IBlockWriter writer;
-        abstract protected Lazy<Stream> InputStream { get; }
-        abstract protected Lazy<Stream> OutStream { get; }
+        abstract protected Stream InputStream { get; }
+        abstract protected Stream OutStream { get; }
         protected readonly IGZipConfigurator zipConfigurator;
         readonly object _lock = new object();
 
         public int ReadBytes(byte[] buffer, int blockSize) =>
-            InputStream.Value.Read(buffer, 0, blockSize);
+            InputStream.Read(buffer, 0, blockSize);
 
         public void WriteBlock(Block block) =>
-                writer.Write(block, OutStream.Value);
+                writer.Write(block, OutStream);
 
         protected virtual void ExecuteDispose()
         {
-            InputStream.Value.Dispose();
-            OutStream.Value.Dispose();
+            InputStream.Dispose();
+            OutStream.Dispose();
         }
 
         bool isDisposed = false;
