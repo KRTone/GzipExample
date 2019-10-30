@@ -18,8 +18,6 @@ namespace Tests
 {
     class Program
     {
-        public static readonly BetType[] betTypes = new BetType[4] { BetType.Live, BetType.Normal, BetType.SuperExpress, BetType.System };
-        public static readonly PlayerType[] playerTypes = new PlayerType[1] { PlayerType.KrmAndPps };
 
         static void Main()
         {
