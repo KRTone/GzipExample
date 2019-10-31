@@ -2,15 +2,15 @@
 {
     public class Block
     {
-        public int Number { get; }
-        public byte[] Bytes { get; }
-        public int Size { get; }
-
-        public Block(int number, byte[] bytes, int size)
+        public Block(int number, int size)
         {
             Number = number;
-            Bytes = bytes;
             Size = size;
         }
+
+        public int Number { get; }
+        public byte[] Data { get; set; }
+        public int Size { get; }
+        public bool Readed { get; set; }
     }
 }

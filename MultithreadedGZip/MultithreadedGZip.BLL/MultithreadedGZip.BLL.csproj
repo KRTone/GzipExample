@@ -36,9 +36,6 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GZip\GZipBase.cs" />
-    <Compile Include="GZip\GZipCompressor.cs" />
-    <Compile Include="GZip\GZipDecompressor.cs" />
     <Compile Include="Interfaces\IBlocksEngine.cs" />
     <Compile Include="Interfaces\IThreadsManager.cs" />
     <Compile Include="Interfaces\ICompressor.cs" />
@@ -46,19 +43,18 @@
     <Compile Include="Interfaces\IGZipExecutor.cs" />
     <Compile Include="Interfaces\ILogService.cs" />
     <Compile Include="Interfaces\IQueuedThreadPool.cs" />
-    <Compile Include="GZip\GZipExecutor.cs" />
     <Compile Include="Common\Block.cs" />
-    <Compile Include="MultithreadedExtensions\BlocksEngine.cs" />
-    <Compile Include="MultithreadedExtensions\ThreadsManager.cs" />
     <Compile Include="Interfaces\Configurators\IMultithreadedConfigurator.cs" />
     <Compile Include="Configurators\MultithreadedGZipConfigurator.cs" />
-    <Compile Include="MultithreadedExtensions\DynamicSemaphore.cs" />
-    <Compile Include="MultithreadedExtensions\QueuedThreadPool.cs" />
     <Compile Include="Interfaces\IBlockWriter.cs" />
     <Compile Include="Interfaces\IStreamWriter.cs" />
     <Compile Include="Interfaces\Configurators\IGZipConfigurator.cs" />
+    <Compile Include="MultithreadedExtensions\MultithreadedGZipExecutor.cs" />
+    <Compile Include="MultithreadedExtensions\QueuedThreadPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Writers\BytesToBlockWriter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="GZip\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

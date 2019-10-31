@@ -1,18 +1,16 @@
-﻿using MultithreadedGZip.BLL.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace MultithreadedGZip.BLL.MultithreadedExtensions
 {
-    public class QueuedThreadPool : IQueuedThreadPool
+    public class QueuedThreadPool
     {
-        public QueuedThreadPool()
+        public QueuedThreadPool(int count)
         {
             actionQueue = new Queue<Action>();
             threads = new List<Thread>();
-            int processorCount = Environment.ProcessorCount;
-            for (int i = 0; i < processorCount; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 var thread = new Thread(Execute) { IsBackground = true };
                 thread.Start();
@@ -28,6 +26,7 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
             while (true)
             {
                 Action action;
+
                 lock (actionQueue)
                 {
                     while (actionQueue.Count == 0)
