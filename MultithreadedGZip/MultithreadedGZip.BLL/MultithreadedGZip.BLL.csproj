@@ -36,6 +36,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GZip\MultithreadedCompressor.cs" />
     <Compile Include="Interfaces\IBlocksEngine.cs" />
     <Compile Include="Interfaces\IThreadsManager.cs" />
     <Compile Include="Interfaces\ICompressor.cs" />
@@ -53,8 +54,6 @@
     <Compile Include="MultithreadedExtensions\QueuedThreadPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="GZip\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
