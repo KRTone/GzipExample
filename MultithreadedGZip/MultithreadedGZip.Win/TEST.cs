@@ -19,9 +19,15 @@ namespace Tests
     {
         static void Main()
         {
-            var ex = new MultithreadedReadWriteEngine();
-            ex.Execute();
-            ex.Wait();
+            MultithreadedGZipExecutor ex = new MultithreadedCompressor(@"C:\Backups\4k.jpg", @"C:\Backups\4k.jpg.gz");
+            ex.Execute(true);
+            MultithreadedGZipExecutor ex2 = new MultithreadedDecompressor(@"C:\Backups\4k.jpg.gz", @"C:\Backups\4k2.jpg");
+            ex2.Execute(true);
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Console.WriteLine((e.ExceptionObject as Exception).Message);
+                Console.ReadKey();
+            };
         }
 
         public static void Decompress()
@@ -51,54 +57,12 @@ namespace Tests
             public bool Readed { get; set; }
         }
 
-        public sealed class DynamicSemaphore
-        {
-            public DynamicSemaphore(int maxCount)
-            {
-                if (maxCount < 1)
-                    throw new ArgumentException(nameof(maxCount));
-
-                this.maxCount = CurrentCount = maxCount;
-            }
-
-            private object _lock = new object();
-            private int maxCount;
-            public int CurrentCount { get; private set; }
-
-            public void WaitOne()
-            {
-                lock (_lock)
-                {
-                    while (CurrentCount <= 0)
-                    {
-                        Monitor.Wait(_lock);
-                    }
-                    CurrentCount--;
-                }
-            }
-
-            public void Release()
-            {
-                lock (_lock)
-                {
-                    if (CurrentCount < maxCount)
-                    {
-                        CurrentCount++;
-                        Monitor.Pulse(_lock);
-                    }
-                    else
-                        throw new SemaphoreFullException("Semaphore released too many times.");
-                }
-            }
-        }
-
         public class QueuedThreadPool
         {
             public QueuedThreadPool(int count)
             {
                 actionQueue = new Queue<Action>();
                 threads = new List<Thread>();
-                dynamicSemaphore = new DynamicSemaphore(count);
                 for (int i = 0; i < count; ++i)
                 {
                     var thread = new Thread(Execute) { IsBackground = true };
@@ -109,7 +73,6 @@ namespace Tests
 
             readonly Queue<Action> actionQueue;
             readonly List<Thread> threads;
-            readonly DynamicSemaphore dynamicSemaphore;
 
             void Execute()
             {
@@ -139,33 +102,64 @@ namespace Tests
             }
         }
 
-        public class MultithreadedReadWriteEngine
+        public abstract class MultithreadedGZipExecutor
         {
-            public MultithreadedReadWriteEngine()
+            public MultithreadedGZipExecutor(string inputFilePath, string outputFilePath)
             {
-                executeThread = new Thread(Execute) { IsBackground = true };
+                ThrowIsNullOrWhiteSpace(inputFilePath, out this.inputFilePath);
+                ThrowIsNullOrWhiteSpace(outputFilePath, out this.outputFilePath);
+                executeThread = new Thread(Execution) { IsBackground = true };
+                resetEvent = new ManualResetEvent(false);
+            }
+
+            private void ThrowIsNullOrWhiteSpace(string inStr, out string outStr)
+            {
+                if (string.IsNullOrWhiteSpace(inStr))
+                    throw new ArgumentNullException(inStr);
+                outStr = inStr;
+            }
+
+            protected readonly string inputFilePath;
+            protected readonly string outputFilePath;
+            protected readonly Thread executeThread;
+            readonly ManualResetEvent resetEvent;
+
+            public virtual void Execute(bool wait)
+            {
+                executeThread.Start();
+                if (wait)
+                    resetEvent.WaitOne();
+            }
+            protected abstract void InternalExecute();
+            public virtual void Wait()
+            {
+                resetEvent.WaitOne();
+            }
+
+            private void Execution()
+            {
+                InternalExecute();
+                resetEvent.Set();
+            }
+        }
+
+        public class MultithreadedCompressor : MultithreadedGZipExecutor
+        {
+            public MultithreadedCompressor(string inputFilePath, string outputFilePath) : base(inputFilePath, outputFilePath)
+            {
+
                 blocksCount = Environment.ProcessorCount - 1;
                 readThreadPool = new QueuedThreadPool(blocksCount);
                 blocksToWrite = new List<Block>();
-                _lockCompress = new object();
-                ResetEvent = new ManualResetEvent(true);
             }
 
-            readonly ManualResetEvent ResetEvent;
-            readonly Thread executeThread;
             readonly QueuedThreadPool readThreadPool;
             int blocksCount;
-            List<Block> blocksToWrite;
-            object _lockCompress;
-
-            public void Wait()
-            {
-                ResetEvent.WaitOne();
-            }
+            readonly List<Block> blocksToWrite;
 
             void CompressStreamToBlockData(Stream readStream, Block block)
             {
-                using (var inputStream = new MemoryStream(ReadByteBlock(readStream, block.Size, block.Number)))
+                using (var inputStream = new MemoryStream(ReadByteBlock(readStream, block)))
                 {
                     using (var compressedStream = new MemoryStream())
                     {
@@ -175,31 +169,33 @@ namespace Tests
                         }
                         block.Data = compressedStream.ToArray();
                         block.Readed = true;
-                        lock (_lockCompress)
-                        {
-                            blocksToWrite.Add(block);
-                            while (blocksToWrite.Count > blocksCount)
-                            {
-                                Monitor.Wait(_lockCompress);
-                            }
-                        }
                     }
                 }
+
+                lock (blocksToWrite)
+                {
+                    blocksToWrite.Add(block);
+                    while (blocksToWrite.Count > blocksCount)
+                    {
+                        Monitor.Wait(blocksToWrite);
+                    }
+                }
+
             }
 
-            byte[] ReadByteBlock(Stream inputStream, int size, int blockNum)
+            byte[] ReadByteBlock(Stream inputStream, Block block)
             {
-                var readedBytes = new byte[size];
-                inputStream.Position = size * blockNum;
-                inputStream.Read(readedBytes, 0, size);
+                var readedBytes = new byte[block.Size];
+                inputStream.Position = block.Size * block.Number;
+                inputStream.Read(readedBytes, 0, block.Size);
                 return readedBytes;
             }
 
-            public void Execute()
+            protected override void InternalExecute()
             {
                 int expectedBlock = 0;
                 int lastBlockNum = 0;
-                var currentLength = new FileInfo(@"C:\Backups\4k.jpg").Length;
+                var currentLength = new FileInfo(inputFilePath).Length;
                 var blockSize = 1024 * 1024;
 
                 //создание очереди сжатия блоков
@@ -208,7 +204,7 @@ namespace Tests
                     var newBlock = new Block(lastBlockNum, blockSize);
                     readThreadPool.AddActionToQueue(() =>
                     {
-                        using (var readStream = new FileStream(@"C:\Backups\4k.jpg", FileMode.Open, FileAccess.Read, FileShare.Read))
+                        using (var readStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
                             CompressStreamToBlockData(readStream, newBlock);
                         }
@@ -217,14 +213,14 @@ namespace Tests
                     lastBlockNum++;
                 }
 
-                using (var outputStream = new FileStream(@"C:\Backups\4k.jpg.gz", FileMode.Create, FileAccess.Write))
+                using (var outputStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
                 {
                     while (expectedBlock < lastBlockNum)
                     {
                         var isWait = true;
                         while (isWait)
                         {
-                            lock (_lockCompress)
+                            lock (blocksToWrite)
                             {
                                 isWait = blocksToWrite.FirstOrDefault(w => w.Number == expectedBlock && w.Readed) == null;
                             }
@@ -232,19 +228,186 @@ namespace Tests
 
                         Block block = null;
 
-                        lock (_lockCompress)
+                        lock (blocksToWrite)
                             block = blocksToWrite.First(w => w.Number == expectedBlock && w.Readed);
 
                         outputStream.Write(block.Data, 0, block.Data.Length);
-                        lock (_lockCompress)
+                        lock (blocksToWrite)
                         {
                             blocksToWrite.Remove(block);
-                            Monitor.Pulse(_lockCompress);
+                            Monitor.Pulse(blocksToWrite);
                         }
                         expectedBlock++;
                     }
                 }
-                ResetEvent.Set();
+            }
+        }
+
+        public class MultithreadedDecompressor : MultithreadedGZipExecutor
+        {
+            public MultithreadedDecompressor(string inputFilePath, string outputFilePath) : base(inputFilePath, outputFilePath)
+            {
+
+                blocksCount = Environment.ProcessorCount - 1;
+                readThreadPool = new QueuedThreadPool(blocksCount);
+                blocksToWrite = new List<Block>();
+            }
+
+            readonly QueuedThreadPool readThreadPool;
+            int blocksCount;
+            readonly List<Block> blocksToWrite;
+
+            void DecompressStreamToBlockData(Stream readStream, Block block)
+            {
+                //using (var inputStream = new MemoryStream(ReadByteBlock(readStream, block)))
+                using (var inputStream = GetCompressedBlock(readStream, new MemoryStream()))
+                {
+                    using (var decompressedStream = new MemoryStream())
+                    {
+                        using (var gz = new GZipStream(inputStream, CompressionMode.Decompress))
+                        {
+                            gz.CopyTo(decompressedStream);
+                        }
+                        var data = decompressedStream.ToArray();
+                        block.Data = decompressedStream.ToArray();
+                        block.Readed = true;
+                    }
+                }
+
+                lock (blocksToWrite)
+                {
+                    blocksToWrite.Add(block);
+                    while (blocksToWrite.Count > blocksCount)
+                    {
+                        Monitor.Wait(blocksToWrite);
+                    }
+                }
+
+            }
+
+            byte[] ReadByteBlock(Stream inputStream, Block block)
+            {
+                var readedBytes = new byte[block.Size];
+                bool isFirstblock = true;
+                while (isFirstblock)
+                {
+                    inputStream.Position = block.Size * block.Number;
+                    inputStream.Read(readedBytes, 0, block.Size);
+                    inputStream.ReadByte();
+
+                }
+
+                return readedBytes;
+            }
+
+            MemoryStream GetCompressedBlock(Stream inputStream, MemoryStream outStream)
+            {
+                bool isCurrent = true;
+                while (inputStream.Position < inputStream.Length)
+                {
+                    if (Read(inputStream, outStream, 31))
+                    {
+                        if (Read(inputStream, outStream, 139))
+                        {
+                            if (Read(inputStream, outStream, 8))
+                            {
+                                if (Read(inputStream, outStream, 0))
+                                {
+                                    if (Read(inputStream, outStream, 0))
+                                    {
+                                        if (Read(inputStream, outStream, 0))
+                                        {
+                                            if (Read(inputStream, outStream, 0))
+                                            {
+                                                if (Read(inputStream, outStream, 0))
+                                                {
+                                                    if (Read(inputStream, outStream, 4))
+                                                    {
+                                                        if (Read(inputStream, outStream, 0))
+                                                        {
+                                                            if (isCurrent)
+                                                            {
+                                                                isCurrent = false;
+                                                                continue;
+                                                            }
+                                                            inputStream.Position -= 10;
+                                                            var data = outStream.ToArray().Take((int)outStream.Length - 10).ToArray();
+                                                            return new MemoryStream(data);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return outStream;
+            }
+
+            bool Read(Stream inputStream, Stream outStream, byte comparingByte)
+            {
+                byte readedByte = (byte)inputStream.ReadByte();
+                if (readedByte == comparingByte)
+                {
+                    outStream.WriteByte(comparingByte);
+                    return true;
+                }
+                outStream.WriteByte(readedByte);
+                return false;
+            }
+
+            protected override void InternalExecute()
+            {
+                int expectedBlock = 0;
+                int lastBlockNum = 0;
+                var currentLength = new FileInfo(inputFilePath).Length;
+                var blockSize = 1024 * 1024;
+
+                //создание очереди сжатия блоков
+                while (currentLength > 0)
+                {
+                    var newBlock = new Block(lastBlockNum, blockSize);
+                    readThreadPool.AddActionToQueue(() =>
+                    {
+                        using (var readStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            DecompressStreamToBlockData(readStream, newBlock);
+                        }
+                    });
+                    currentLength -= blockSize;
+                    lastBlockNum++;
+                }
+
+                using (var outputStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+                {
+                    while (expectedBlock < lastBlockNum)
+                    {
+                        var isWait = true;
+                        while (isWait)
+                        {
+                            lock (blocksToWrite)
+                            {
+                                isWait = blocksToWrite.FirstOrDefault(w => w.Number == expectedBlock && w.Readed) == null;
+                            }
+                        }
+
+                        Block block = null;
+
+                        lock (blocksToWrite)
+                            block = blocksToWrite.First(w => w.Number == expectedBlock && w.Readed);
+
+                        outputStream.Write(block.Data, 0, block.Data.Length);
+                        lock (blocksToWrite)
+                        {
+                            blocksToWrite.Remove(block);
+                            Monitor.Pulse(blocksToWrite);
+                        }
+                        expectedBlock++;
+                    }
+                }
             }
         }
     }
