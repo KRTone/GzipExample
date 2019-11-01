@@ -37,18 +37,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GZip\MultithreadedCompressor.cs" />
-    <Compile Include="Interfaces\IBlocksEngine.cs" />
-    <Compile Include="Interfaces\IThreadsManager.cs" />
-    <Compile Include="Interfaces\ICompressor.cs" />
-    <Compile Include="Interfaces\ICustomSemaphore.cs" />
-    <Compile Include="Interfaces\IGZipExecutor.cs" />
+    <Compile Include="GZip\MultithreadedDecompressor.cs" />
+    <Compile Include="Interfaces\IMultithreadedGZipExecutor.cs" />
     <Compile Include="Interfaces\ILogService.cs" />
-    <Compile Include="Interfaces\IQueuedThreadPool.cs" />
     <Compile Include="Common\Block.cs" />
     <Compile Include="Interfaces\Configurators\IMultithreadedConfigurator.cs" />
     <Compile Include="Configurators\MultithreadedGZipConfigurator.cs" />
-    <Compile Include="Interfaces\IBlockWriter.cs" />
-    <Compile Include="Interfaces\IStreamWriter.cs" />
     <Compile Include="Interfaces\Configurators\IGZipConfigurator.cs" />
     <Compile Include="MultithreadedExtensions\MultithreadedGZipExecutor.cs" />
     <Compile Include="MultithreadedExtensions\QueuedThreadPool.cs" />

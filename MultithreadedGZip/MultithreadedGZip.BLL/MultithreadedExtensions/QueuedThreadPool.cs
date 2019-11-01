@@ -10,6 +10,8 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
         {
             actionQueue = new Queue<Action>();
             threads = new List<Thread>();
+            OnException += ThrowInternal;
+
             for (int i = 0; i < count; ++i)
             {
                 var thread = new Thread(Execute) { IsBackground = true };
@@ -17,9 +19,12 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
                 threads.Add(thread);
             }
         }
-
+        
         readonly Queue<Action> actionQueue;
         readonly List<Thread> threads;
+
+        public event HandleException OnException;
+        public delegate void HandleException(Exception ex);
 
         void Execute()
         {
@@ -37,14 +42,37 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
             }
         }
 
+        void ThrowInternal(Exception ex)
+        {
+            threads.ForEach(each =>
+            {
+                actionQueue.Clear();
+                if (each != Thread.CurrentThread)
+                    each.Abort();
+            });
+        }
+
         public void AddActionToQueue(Action action)
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
             lock (actionQueue)
             {
-                actionQueue.Enqueue(action);
+                actionQueue.Enqueue(() => SafeExecute(action));
                 Monitor.Pulse(actionQueue);
+            }
+        }
+
+        void SafeExecute(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                lock (actionQueue)
+                    OnException.Invoke(ex);
             }
         }
     }

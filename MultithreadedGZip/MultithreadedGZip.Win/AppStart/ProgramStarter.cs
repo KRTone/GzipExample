@@ -3,29 +3,18 @@ using System;
 
 namespace MultithreadedGZip.Win.AppStart
 {
-    public class ProgramStarter : IDisposable
+    public class ProgramStarter
     {
-        public ProgramStarter(IGZipExecutor zipper)
+        public ProgramStarter(IMultithreadedGZipExecutor zipper)
         {
             this.zipper = zipper ?? throw new ArgumentNullException(nameof(zipper));
         }
 
-        readonly IGZipExecutor zipper;
+        readonly IMultithreadedGZipExecutor zipper;
 
         public void Run()
         {
-            zipper.Execute();
-        }
-
-        bool isDisposed = false;
-
-        public void Dispose()
-        {
-            if (!isDisposed)
-            {
-                zipper.Dispose();
-                isDisposed = true;
-            }
+            zipper.Execute(true);
         }
     }
 }

@@ -7,7 +7,6 @@
             Number = number;
             Size = size;
         }
-
         public int Number { get; }
         public byte[] Data { get; set; }
         public int Size { get; }

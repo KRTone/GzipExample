@@ -15,10 +15,8 @@ namespace MultithreadedGZip.Win
 
             Console.WriteLine("All done. Starting program...");
 
-            using (var program = container.Resolve<ProgramStarter>())
-            {
-                program.Run();
-            }
+            var program = container.Resolve<ProgramStarter>();
+            program.Run();
 
             Console.WriteLine("Program successfully completed");
             Console.WriteLine("Press any key to exit");
@@ -27,6 +25,4 @@ namespace MultithreadedGZip.Win
             Environment.Exit(0);
         }
     }
-
-
 }
