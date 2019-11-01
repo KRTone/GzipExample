@@ -3,6 +3,7 @@ using MultithreadedGZip.BLL.Configurators;
 using MultithreadedGZip.BLL.Interfaces;
 using MultithreadedGZip.BLL.Interfaces.Configurators;
 using MultithreadedGZip.BLL.MultithreadedExtensions;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,36 +17,54 @@ namespace MultithreadedGZip.BLL.GZip
             : base(gzcfg.InFilePath, gzcfg.OutFilePath, mcfg.BlockSize, mcfg.Processors, logService)
         {
         }
-
-        long streamPosition;
-        int expetedBlockNum;
+        
         object _lockStreamRead = new object();
+
+        void ReadBlocksEndPostions(Dictionary<int, long> numLengthDict, int maxBlocksNum)
+        {
+            int indx = 0;
+            using (var input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
+            using (var sr = new BinaryReader(input))
+            {
+                input.Position = input.Length - ((maxBlocksNum + 1) * 8);
+                while (maxBlocksNum > indx)
+                {
+                    numLengthDict.Add(indx++, sr.ReadInt64());
+                }
+            }
+        }
 
         protected override void InternalExecute()
         {
             int expectedBlock = 0;
             int lastBlockNum = 0;
-            int maxLength = 0;
+            int maxBlocksNum = 0;
+            Dictionary<int, long> numLengthDict = new Dictionary<int, long>();
+
+            //чтение количества блоков
             using (var sr = new BinaryReader(new FileStream(inputFilePath, FileMode.Open, FileAccess.Read)))
             {
-                maxLength = sr.ReadInt32();
+                maxBlocksNum = sr.ReadInt32();
             }
+            //чтение позиции блоков в сжатом файле
+            ReadBlocksEndPostions(numLengthDict, maxBlocksNum);
 
-            //пропускаем значение хранящее количества блоков
-            streamPosition = 4;
-
-            while (maxLength >= lastBlockNum)
+            //создание очереди разархивирования блоков
+            while (maxBlocksNum >= lastBlockNum)
             {
                 var newBlock = new Block(lastBlockNum, blockSize);
                 readThreadPool.AddActionToQueue(() =>
                 {
                     using (var readStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        DecompressStreamToBlockData(readStream, newBlock);
+                        DecompressStreamToBlockData(readStream, newBlock,
+                            newBlock.Number == 0 ? 4 : numLengthDict[newBlock.Number - 1] + 4,
+                            newBlock.Number == maxBlocksNum ? readStream.Length : numLengthDict[newBlock.Number] + 4);
                     }
                 });
                 lastBlockNum++;
             }
+
 
             using (var outputStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
             {
@@ -76,26 +95,15 @@ namespace MultithreadedGZip.BLL.GZip
             }
         }
 
-        void DecompressStreamToBlockData(Stream readStream, Block block)
+        void DecompressStreamToBlockData(Stream readStream, Block block, long startPos, long endPos)
         {
-            while (expetedBlockNum != block.Number)
+            readStream.Position = startPos;
+            var length = endPos - startPos;
+            var data = new byte[length];
+            readStream.Read(data, 0, (int)length);
+            
+            using (var inputStream = new MemoryStream(data))
             {
-                lock (_lockStreamRead)
-                {
-                    Monitor.Wait(_lockStreamRead);
-                }
-            }
-
-            using (var inputStream = GetCompressedBlock(readStream, new MemoryStream(), streamPosition))
-            {
-                //меняем позицию для чтения и выводим из сна следующий блок
-                lock (_lockStreamRead)
-                {
-                    expetedBlockNum++;
-                    streamPosition = readStream.Position;
-                    Monitor.PulseAll(_lockStreamRead);
-                }
-
                 using (var decompressedStream = new MemoryStream())
                 {
                     using (var gz = new GZipStream(inputStream, CompressionMode.Decompress))
@@ -115,76 +123,6 @@ namespace MultithreadedGZip.BLL.GZip
                     Monitor.Wait(blocksToWrite);
                 }
             }
-        }
-
-        //извлечение зазипованных блоков в файле требует оптимизирования
-        //проблема в том что им добавляется header и suffix зипа (это надо копать, это уже совсем другое тз)
-        //можно даже начать читать подобные мануалы https://tools.ietf.org/html/rfc1952 и это займет уйму времени
-        //чем хуже сжаты блоки тем дольше выполняется данный код (чем длиннее зазипованный блок данных)
-        //Возможное решение: например можно вслед за байтами хранящисми значение количества блоков
-        //вписывать long значения позиций где находятся эти блоки и затем мы не будем привязаны к тому
-        //что будем ожидать, пока границы предыдущего блока не будут выявлены,
-        //это уже какой-то свой +-полноценный зипер будет :D 
-        //(я раньше с зипованием не работал, поэтому знания не сильно глубоки в этой области и мб чего-то еще не догоняю)
-        MemoryStream GetCompressedBlock(Stream inputStream, MemoryStream outStream, long streamStartPos)
-        {
-            bool isCurrent = true;
-            inputStream.Position = streamStartPos;
-            while (inputStream.Position < inputStream.Length)
-            {
-                if (Read(inputStream, outStream, 31))
-                {
-                    if (Read(inputStream, outStream, 139))
-                    {
-                        if (Read(inputStream, outStream, 8))
-                        {
-                            if (Read(inputStream, outStream, 0))
-                            {
-                                if (Read(inputStream, outStream, 0))
-                                {
-                                    if (Read(inputStream, outStream, 0))
-                                    {
-                                        if (Read(inputStream, outStream, 0))
-                                        {
-                                            if (Read(inputStream, outStream, 0))
-                                            {
-                                                if (Read(inputStream, outStream, 4))
-                                                {
-                                                    if (Read(inputStream, outStream, 0))
-                                                    {
-                                                        if (isCurrent)
-                                                        {
-                                                            isCurrent = false;
-                                                            continue;
-                                                        }
-                                                        inputStream.Position -= 10;
-                                                        var data = outStream.ToArray().Take((int)outStream.Length - 10).ToArray();
-                                                        return new MemoryStream(data);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            outStream.Position = 0;
-            return outStream;
-        }
-
-        bool Read(Stream inputStream, Stream outStream, byte comparingByte)
-        {
-            byte readedByte = (byte)inputStream.ReadByte();
-            if (readedByte == comparingByte)
-            {
-                outStream.WriteByte(comparingByte);
-                return true;
-            }
-            outStream.WriteByte(readedByte);
-            return false;
         }
     }
 }

@@ -3,6 +3,7 @@ using MultithreadedGZip.BLL.Configurators;
 using MultithreadedGZip.BLL.Interfaces;
 using MultithreadedGZip.BLL.Interfaces.Configurators;
 using MultithreadedGZip.BLL.MultithreadedExtensions;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace MultithreadedGZip.BLL.GZip
             {
                 using (var sw = new BinaryWriter(outputStream))
                 {
+                    Dictionary<int, long> numLengthDict = new Dictionary<int, long>();
                     //запишем количество блоков необходимых для распаковки
                     sw.Write(lastBlockNum - 1);
 
@@ -66,10 +68,17 @@ namespace MultithreadedGZip.BLL.GZip
                         outputStream.Write(block.Data, 0, block.Data.Length);
                         lock (blocksToWrite)
                         {
+                            numLengthDict.Add(block.Number, block.Data.Length);
                             blocksToWrite.Remove(block);
                             Monitor.Pulse(blocksToWrite);
                         }
                         expectedBlock++;
+                    }
+                    long value = 0;
+                    foreach (var pos in numLengthDict)
+                    {
+                        value += pos.Value;
+                        sw.Write(value);
                     }
                 }
             }

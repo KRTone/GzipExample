@@ -34,6 +34,7 @@ namespace MultithreadedGZip.BLL.MultithreadedExtensions
         protected readonly int blocksToWriteCount;
         protected readonly List<Block> blocksToWrite;
         protected readonly int blockSize;
+        protected readonly object _lockWrite = new object();
 
         protected readonly ILogService logService;
 
