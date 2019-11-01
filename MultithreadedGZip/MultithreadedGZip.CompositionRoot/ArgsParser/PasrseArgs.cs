@@ -3,9 +3,9 @@ using System.IO.Compression;
 
 namespace MultithreadedGZip.CompositionRoot.ArgsParser
 {
-    static class ArgsExtensions
+    class PasrseArgs
     {
-        public static CompressionMode GetCompressionMode(this string[] args)
+        public static CompressionMode GetCompressionMode(string[] args)
         {
             switch (args[0].ToLower())
             {
@@ -18,17 +18,17 @@ namespace MultithreadedGZip.CompositionRoot.ArgsParser
             }
         }
 
-        public static string GetInFilePath(this string[] args)
+        public static string GetInFilePath(string[] args)
         {
             return GetPath(args, PathType.InFile);
         }
 
-        public static string GetOutFilePath(this string[] args)
+        public static string GetOutFilePath(string[] args)
         {
             return GetPath(args, PathType.OutFile);
         }
 
-        static string GetPath(this string[] args, PathType pathType)
+        static string GetPath(string[] args, PathType pathType)
         {
             switch (pathType)
             {
@@ -41,7 +41,7 @@ namespace MultithreadedGZip.CompositionRoot.ArgsParser
             }
         }
 
-        public static void ThrowIfBadArgs(this string[] args)
+        public static void ThrowIfBadArgs(string[] args)
         {
             if (args == null || args.Length != 3)
                 throw new ArgumentException("Incorrect input args");
